@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>120 Question Quiz by Sumant Kumar</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f5f9;color:#18212f}
+  header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #dfe4ec;padding:14px 18px;box-shadow:0 2px 10px #00000012}
+  .top{max-width:1100px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  h1{font-size:20px;margin:0}.sub{font-size:13px;color:#687386;margin-top:4px}
+  .stats{display:flex;gap:10px;flex-wrap:wrap}.stat{background:#eef2f7;border-radius:10px;padding:8px 12px;font-size:13px}
+  main{max-width:1100px;margin:22px auto;padding:0 16px}
+  .notice{background:#fff;border:1px solid #dfe4ec;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .q{background:#fff;border:1px solid #dfe4ec;border-radius:12px;padding:12px}
+  .qnum{font-weight:700;font-size:14px;margin-bottom:10px}
+  .options{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  label{cursor:pointer;text-align:center;border:1px solid #cfd6e2;border-radius:8px;padding:8px 3px;font-weight:700;font-size:13px;user-select:none}
+  input{display:none}
+  input:checked+span{background:#2563eb;color:#fff;border-color:#2563eb}
+  label span{display:block;border-radius:6px;padding:3px}
+  .answered{border-color:#8db4ff;background:#f7faff}
+  .actions{position:sticky;bottom:0;z-index:9;background:#fff;border-top:1px solid #dfe4ec;padding:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  button{border:0;border-radius:9px;padding:11px 18px;font-weight:700;cursor:pointer}
+  .primary{background:#2563eb;color:#fff}.secondary{background:#e9edf3;color:#18212f}.danger{background:#dc2626;color:#fff}
+  #result{display:none;max-width:700px;margin:20px auto;background:#fff;border:2px solid #2563eb;border-radius:16px;padding:20px}
+  .big{font-size:28px;font-weight:800}
+  @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:500px){.grid{grid-template-columns:1fr}.options{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+<div class="top">
+  <div><h1><b>120 Question Quiz</b> — <span style="font-weight:400;">by Sumant Kumar</span></h1><div class="sub">120 questions • Choose one option per question</div></div>
+  <div class="stats">
+    <div class="stat">Answered: <b id="answered">0</b>/120</div>
+    <div class="stat">Unanswered: <b id="unanswered">120</b></div>
+  </div>
+</div>
+</header>
+
+<main>
+<div class="notice">
+  <b>OMR Instructions:</b> Select A, B, C or D for every question. Your selections are saved in this page while you work.
+  The sheet does <b>not</b> contain an answer key; use <b>Submit OMR</b> to lock the sheet and review your response count.
+</div>
+
+<form id="omr"><div class="grid" id="questions"></div></form>
+<div id="result">
+  <div class="big">OMR Submitted</div>
+  <p>Answered: <b id="rAnswered"></b> / 120</p>
+  <p>Unanswered: <b id="rUnanswered"></b></p>
+  <p>Your selected answers are listed below. A score requires an answer key.</p>
+  <div id="answerList"></div>
+</div>
+</main>
+
+<div class="actions">
+  <button class="secondary" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">↑ Top</button>
+  <button class="secondary" onclick="clearAll();return false">Clear All</button>
+  <button class="secondary" onclick="saveAnswers();return false">Save / Download Answers</button>
+  <button class="primary" onclick="submitOMR();return false">Submit OMR</button>
+</div>
+
+<script>
+const total=120, letters=["A","B","C","D"];
+const box=document.getElementById("questions");
+
+for(let i=1;i<=total;i++){
+  const card=document.createElement("div");
+  card.className="q"; card.id="q"+i;
+  card.innerHTML=`<div class="qnum">Question ${i}</div><div class="options">`+
+    letters.map(l=>`<label><input type="radio" name="q${i}" value="${l}" onchange="update()"><span>${l}</span></label>`).join("")+
+    `</div>`;
+  box.appendChild(card);
+}
+
+function update(){
+  let a=0;
+  for(let i=1;i<=total;i++){
+    const selected=document.querySelector(`input[name=q${i}]:checked`);
+    document.getElementById("q"+i).classList.toggle("answered",!!selected);
+    if(selected)a++;
+  }
+  document.getElementById("answered").textContent=a;
+  document.getElementById("unanswered").textContent=total-a;
+  localStorage.setItem("hpjoa_omr",JSON.stringify(getAnswers()));
+}
+function getAnswers(){
+  const out={};
+  for(let i=1;i<=total;i++){
+    const s=document.querySelector(`input[name=q${i}]:checked`);
+    if(s)out[i]=s.value;
+  }
+  return out;
+}
+function restore(){
+  try{
+    const saved=JSON.parse(localStorage.getItem("hpjoa_omr")||"{}");
+    Object.entries(saved).forEach(([i,v])=>{
+      const el=document.querySelector(`input[name=q${i}][value=${v}]`);
+      if(el)el.checked=true;
+    });
+  }catch(e){}
+  update();
+}
+function clearAll(){
+  if(!confirm("Clear all 120 selected answers?"))return;
+  document.querySelectorAll("input[type=radio]").forEach(x=>x.checked=false);
+  localStorage.removeItem("hpjoa_omr");
+  document.getElementById("result").style.display="none";
+  update();
+}
+function saveAnswers(){
+  const answers=getAnswers();
+  const lines=["HP JOA (IT) — 120 Question OMR","Date: "+new Date().toLocaleString(),"","Question,Answer"];
+  for(let i=1;i<=total;i++)lines.push(`${i},${answers[i]||""}`);
+  const blob=new Blob([lines.join("\\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="HP_JOA_120_OMR_Answers.csv";a.click();URL.revokeObjectURL(a.href);
+}
+function submitOMR(){
+  const answers=getAnswers();
+  const a=Object.keys(answers).length;
+  document.getElementById("rAnswered").textContent=a;
+  document.getElementById("rUnanswered").textContent=total-a;
+  document.getElementById("answerList").innerHTML=Array.from({length:total},(_,k)=>{
+    const i=k+1; return `<span style="display:inline-block;width:95px;margin:3px">Q${i}: <b>${answers[i]||"—"}</b></span>`;
+  }).join("");
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").scrollIntoView({behavior:"smooth"});
+}
+restore();
+</script>
+</body>
+</html>
